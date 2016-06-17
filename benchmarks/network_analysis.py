@@ -104,10 +104,11 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
 
     def _clean(self):
         with in_dir(self.path):
-            node_names = run(['vcl', 'list'], capture='stdout')
-            node_names = map(str.strip, node_names.split())
+            result = run(['vcl', 'list'], capture='stdout',
+                         raises=False)
+            node_names = map(str.strip, result.out.split())
             for n in node_names:
-                run(['nova', 'delete', 'badi-%s' % n])
+                run(['nova', 'delete', 'badi-%s' % n], raises=False)
 
 
 

@@ -2,7 +2,7 @@
 
 from cloudmesh_bench_api.bench import AbstractBenchmarkRunner
 
-from  pxul.os import in_dir
+from pxul.os import in_dir
 from pxul.os import env as use_env
 from pxul.subprocess import run
 

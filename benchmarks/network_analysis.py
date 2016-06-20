@@ -143,6 +143,6 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-b = BenchmarkRunner()
-b.bench(times=3)
+b = BenchmarkRunner(prefix='projects', node_count=6)
+b.bench(times=1)
 print b.report.pretty()

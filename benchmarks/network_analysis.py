@@ -12,37 +12,10 @@ import re
 import time
 
 
-def bash(commands, filename='__bash.sh'):
-    script = '\n'.join(commands)
-
-    with open(filename, 'w') as fd:
-        fd.write(script)
-
-    return filename
-
-
-def get_env(commands):
-    commands = [ '%s >/dev/null 2>&1' % c for c in commands ]
-    script = bash(commands + ['env'])
-
-    new_env = dict()
-
-    output = run(['bash', script], capture='stdout').out.split('\n')
-    for l in output:
-        line = l.strip()
-        if not line: continue
-        if '=' not in line: continue
-        k, v = line.split('=', 1)
-        new_env[k] = v
-    os.unlink(script)
-
-    return new_env
-
 
 class BenchmarkRunner(AbstractBenchmarkRunner):
 
     repo = 'git@github.com:cloudmesh/example-project-network-analysis'
-    openrc = '~/.cloudmesh/clouds/chameleon/CH-817724-openrc.sh'
 
 
     def _fetch(self, prefix):
@@ -61,9 +34,8 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
 
         with in_dir(self.path):
             run(['virtualenv', 'venv'])
-            new_env = get_env(['deactivate',
-                               'source venv/bin/activate',
-                               'source %s' % self.openrc])
+            new_env = self.eval_bash(['deactivate',
+                                      'source venv/bin/activate'])
 
             with use_env(**new_env):
                 run(['pip', 'install', '-r', 'requirements.txt', '-U'])
@@ -143,6 +115,11 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-b = BenchmarkRunner(prefix='projects', node_count=6)
+CHAMELEON_OPENRC_FILES = [
+    '~/.cloudmesh/clouds/chameleon/CH-817724-openrc.sh'
+]
+
+b = BenchmarkRunner(prefix='projects', node_count=6,
+                    files_to_source=CHAMELEON_OPENRC_FILES)
 b.bench(times=1)
 print b.report.pretty()

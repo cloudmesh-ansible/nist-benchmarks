@@ -40,7 +40,7 @@ def get_env(commands):
 class BenchmarkRunner(AbstractBenchmarkRunner):
 
     repo = 'git@github.com:cloudmesh/example-project-network-analysis'
-    openrc = '~/.cloudmesh/clouds/chameleon/CH-817419-openrc.sh'
+    openrc = '~/.cloudmesh/clouds/chameleon/CH-817724-openrc.sh'
 
 
     def _fetch(self, prefix):

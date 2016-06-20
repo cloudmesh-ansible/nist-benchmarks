@@ -116,4 +116,5 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 b = BenchmarkRunner()
-b.bench()
+b.bench(times=3)
+print b.report.pretty()

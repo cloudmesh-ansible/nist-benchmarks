@@ -1,12 +1,14 @@
 
 
 from cloudmesh_bench_api.bench import AbstractBenchmarkRunner
+from cloudmesh_bench_api.bench import BenchmarkError
 
 from pxul.os import in_dir
 from pxul.os import env as use_env
 from pxul.subprocess import run
 
 import os
+import re
 import time
 
 
@@ -69,24 +71,47 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
         return new_env
 
 
+    def _configure(self, node_count=3):
+        if node_count < 3:
+            msg = 'Invalid node count {} is less than {}'\
+                  .format(node_count, 3)
+            raise BenchmarkError(msg)
+
+        ########################################### node count
+
+        new_count = 'N_NODES = {}'.format(node_count)
+        old_count = re.compile(r'N_NODES = \d+')
+        with in_dir(self.path):
+            with open('.cluster.py') as fd:
+                cluster = fd.read()
+            new_cluster = old_count.sub(new_count, cluster)
+            with open('.cluster.py', 'w') as fd:
+                fd.write(new_cluster)
+
+
     def _launch(self):
 
         with in_dir(self.path):
-            run(['vcl', 'boot', '-p', 'openstack', '-P', 'badi-'])
+            run(['vcl', 'boot', '-p', 'openstack', '-P', 'benchmark-'])
 
             for i in xrange(12):
-                result = run(['ansible', 'all', '-m', 'ping', '-o'],
+                result = run(['ansible', 'all', '-m', 'ping', '-o',
+                              '-f', str(self.node_count)],
                              raises=False)
                 if result.ret == 0:
-                    break
+                    return
                 else:
                     time.sleep(5)
+
+            msg = 'Timed out when waiting for nodes to come online'
+            raise BenchmarkError(msg)
 
 
     def _deploy(self):
 
         with in_dir(self.path):
             run(['ansible-playbook',
+                 '-f', str(self.node_count),
                  'play-hadoop.yml',
                  'addons/pig.yml', 'addons/spark.yml',
                  'deploy.yml'

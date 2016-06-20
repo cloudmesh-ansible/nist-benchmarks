@@ -120,7 +120,9 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
 
     def _run(self):
         with in_dir(self.path):
-            run(['ansible-playbook', 'run.yml'])
+            run(['ansible-playbook',
+                 '-f', str(self.node_count),
+                 'run.yml'])
 
 
     def _verify(self):
@@ -132,8 +134,9 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
             result = run(['vcl', 'list'], capture='stdout',
                          raises=False)
             node_names = map(str.strip, result.out.split())
-            for n in node_names:
-                run(['nova', 'delete', 'badi-%s' % n], raises=False)
+            node_names = ['benchmark-%s' % n for n in node_names]
+            cmd = ['nova', 'delete'] + node_names
+            run(cmd, raises=False)
 
 
 

@@ -2,6 +2,7 @@
 
 from cloudmesh_bench_api.bench import AbstractBenchmarkRunner
 from cloudmesh_bench_api.bench import BenchmarkError
+from cloudmesh_bench_api import providers
 
 from pxul.os import in_dir
 from pxul.os import env as use_env
@@ -101,7 +102,8 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
         return True
 
 
-    def _clean(self):
+    def _clean_openstack(self):
+
         with in_dir(self.path):
             result = run(['vcl', 'list'], capture='stdout',
                          raises=False)
@@ -110,6 +112,11 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
             cmd = ['nova', 'delete'] + node_names
             run(cmd, raises=False)
 
+
+    def _clean(self):
+
+        if self.provider_name == providers.openstack:
+            self._clean_openstack()
 
 
 import logging

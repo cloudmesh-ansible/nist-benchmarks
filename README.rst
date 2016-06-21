@@ -46,6 +46,11 @@ The instructions below reflect this state and will be updated as the repository 
      git clone git@github.com:cloudmesh/nist-benchmarks.git
      cd nist-benchmarks
 
+#. Setup the virtual environment::
+
+     virtualenv venv
+     source venv/bin/activate
+
 #. install dependencies::
 
      pip install -r https://raw.githubusercontent.com/cloudmesh/bench-api-utils/master/requirements.txt

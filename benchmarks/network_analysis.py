@@ -17,6 +17,7 @@ import time
 class BenchmarkRunner(AbstractBenchmarkRunner):
 
     repo = 'git@github.com:cloudmesh/example-project-network-analysis'
+    name_prefix = '{}-{}-'.format(os.getlogin(), 'network-analysis')
 
 
     def _fetch(self, prefix):
@@ -65,7 +66,8 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
     def _launch(self):
 
         with in_dir(self.path):
-            run(['vcl', 'boot', '-p', 'openstack', '-P', 'benchmark-'])
+            run(['vcl', 'boot', '-p', 'openstack', '-P',
+                 self.name_prefix])
 
             for i in xrange(12):
                 result = run(['ansible', 'all', '-m', 'ping', '-o',
@@ -108,7 +110,8 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
             result = run(['vcl', 'list'], capture='stdout',
                          raises=False)
             node_names = map(str.strip, result.out.split())
-            node_names = ['benchmark-%s' % n for n in node_names]
+            node_names = ['%s%s' % (self.name_prefix, n) for n in
+                          node_names]
             cmd = ['nova', 'delete'] + node_names
             run(cmd, raises=False)
 

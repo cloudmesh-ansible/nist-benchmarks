@@ -115,6 +115,15 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
             cmd = ['nova', 'delete'] + node_names
             run(cmd, raises=False)
 
+            while True:
+                nova_list = run(['nova', 'list', '--fields', 'name'],
+                                capture='stdout')
+                present = any([n in nova_list.out for n in node_names])
+                if present:
+                    time.sleep(5)
+                else:
+                    break
+
 
     def _clean(self):
 

@@ -138,7 +138,7 @@ CHAMELEON_OPENRC_FILES = [
     '~/.cloudmesh/clouds/chameleon/CH-817724-openrc.sh'
 ]
 
-b = BenchmarkRunner(prefix='projects', node_count=10,
+b = BenchmarkRunner(prefix='projects', node_count=3,
                     files_to_source=CHAMELEON_OPENRC_FILES,
                     provider_name='openstack'
 )

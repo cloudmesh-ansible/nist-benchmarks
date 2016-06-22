@@ -12,6 +12,9 @@ import os
 import re
 import time
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 
 class BenchmarkRunner(AbstractBenchmarkRunner):
@@ -31,6 +34,95 @@ class BenchmarkRunner(AbstractBenchmarkRunner):
 
             return os.path.join(os.getcwd(), reponame)
 
+
+    def _generate_data(self, params):
+        """Configure the data generation method
+
+        Valid parameters:
+
+        - method (:class:`str`): one of {lognormal|rmat}
+        - nodes: (:class:`int`): number of nodes in the graph
+        - edges: (:class:`int`): number of edges in the graph
+        - mu: (:class:`float`): mu parameter for lognormal graph
+        - sigma: (:class:`float`): sigma parameter for lognormal graph
+        - nodesfile: (:class:`str`): path to save the nodes on HDFS
+        - edgesfile: (:class:`str`): path to save the edges on HDFS
+        - metric (:class:`str`): metric to calculate during analysis
+
+        If no parameters are specified the default values will be used.
+
+        :type params: :class:`dict` of :class:`str` to values
+        """
+
+        def replace_param(name, value, string):
+            logger.debug('Replacing %s with %s', name, value)
+
+            # this mirrors the vars defined in spark-submit.sh
+            names = dict(
+                method = 'NA_METHOD',
+                method_args = 'NA_METHOD_ARGS',
+                nodesfile = 'NA_NODESFILE',
+                edgesfile = 'NA_EDGESFILE',
+                metric = 'NA_METRIC',
+            )
+
+
+            if name in names.keys():
+                varname = names[name]
+            elif name in ['nodes', 'edges']:
+                varname = names['method_args']
+            else:
+                msg = "I don't know how to set parameter {}".format(name)
+                logger.error(msg)
+                raise ValueError(msg)                
+
+            pattern = '({}=")(.*)(" *### REGEXP REPLACE)'.format(varname)
+
+            match = re.search(pattern, string)
+            if not match:
+                msg = 'Unable to match pattern {} on string \n{}'.format(pattern, string)
+                raise ValueError(msg)
+
+            current_value = match.groups(2)
+            logger.debug('Current value: %s', current_value)
+
+            if name in ['nodes', 'edges']:
+
+                if name == 'nodes':
+                    flag = '-n'
+                elif name == 'edges':
+                    flag = '-e'
+
+                if flag + ' ' not in current_value:
+                    new_value = '{} {}'.format(flag, value)
+                else:
+                    value_pattern = r'({} \d+)'.format(flag)
+                    assert re.match(value_pattern, current_value)
+                    new_value = re.sub(value_pattern,
+                                       r'{} {}'.format(flag, value),
+                                       current_value)
+
+            else:
+                assert name in names.keys()
+                new_value = "{}".format(value)
+
+            logger.info('New value: %s', new_value)
+            new_string = re.sub(pattern, r'\1{}\3'.format(new_value), string)
+            return new_string
+
+
+        with in_dir(self.path):
+            with open('spark-submit.sh') as fd:
+                string = fd.read()
+
+            for name, value in params.iteritems():
+                string = replace_param(name, value, string)
+
+            with open('spark-submit.sh', 'w') as fd:
+                fd.write(string)
+
+
+        return False
 
     def _prepare(self):
 
@@ -140,7 +232,8 @@ CHAMELEON_OPENRC_FILES = [
 
 b = BenchmarkRunner(prefix='projects', node_count=3,
                     files_to_source=CHAMELEON_OPENRC_FILES,
-                    provider_name='openstack'
+                    provider_name='openstack',
+                    data_params=dict(nodes=10),
 )
 b.bench(times=5)
 print b.report.pretty()

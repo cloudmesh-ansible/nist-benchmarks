@@ -142,5 +142,5 @@ b = BenchmarkRunner(prefix='projects', node_count=3,
                     files_to_source=CHAMELEON_OPENRC_FILES,
                     provider_name='openstack'
 )
-b.bench(times=10)
+b.bench(times=5)
 print b.report.pretty()

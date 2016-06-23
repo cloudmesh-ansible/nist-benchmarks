@@ -36,10 +36,21 @@ The instructions below reflect this state and will be updated as the repository 
    appropriate ``virtualenv`` package for this.
 
 
+.. note::
+
+   We also recommend using ``ssh-agent`` otherwise you will be
+   entering your ssh passphrase multiple times.
+
+
 =======
  Usage
 =======
 
+
+#. Start ``ssh-agent``::
+
+     eval `ssh-agent`
+     ssh-add
 
 #. Download this repository::
 
